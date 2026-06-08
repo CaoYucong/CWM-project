@@ -203,10 +203,10 @@ Performances List:
 
 Due to the fact that the `matmul_fast` is edited and re-compiled, the first-time running would take a bit longer, so the average running time is taken after the first time is removed.
 
-| name           | first run time (seconds) | average run time (seconds) |
-| -------------- | ------------------------ | -------------------------- |
-| `matmul_slow`  | 0.22                     | 0.22                       |
-| `matmul_fast1` | 0.23                     | 0.20                       |
-| `matmul_fast2` | 0.24                     | 0.21                       |
-| `matmul_fast3` | 0.20                     | 0.17                       |
+| name           | first run time (seconds) | average run time (seconds) | Comments           |
+| -------------- | ------------------------ | -------------------------- | ------------------ |
+| `matmul_slow`  | 0.22                     | 0.22                       | Original algorithm |
+| `matmul_fast1` | 0.23                     | 0.20                       |                    |
+| `matmul_fast2` | 0.24                     | 0.21                       | Only               |
+| `matmul_fast3` | 0.20                     | 0.17                       |                    |
 
