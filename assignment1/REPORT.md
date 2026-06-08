@@ -1,3 +1,8 @@
+# Report of Assignment 1
+
+- Name: Yucong Cao
+- Github Repo Link: [CaoYucong/CWM-Project](https://github.com/CaoYucong/CWM-project)
+
 ## Basic Timing
 
 ### Question 1
