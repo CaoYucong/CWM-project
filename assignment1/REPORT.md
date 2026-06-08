@@ -198,3 +198,15 @@ Possible ways to improve the execution speed are to:
   - `matmul_fast1` access the same row of matrix $A$ and $C$;
   - `matmul_fast3` transposes $B$ first to make sure the $B$ is accessed row-by-row.
 - reduce the loop time (e.g. `matmul_fast_2`)
+
+Performances List:
+
+Due to the fact that the `matmul_fast` is edited and re-compiled, the first-time running would take a bit longer, so the average running time is taken after the first time is removed.
+
+| name           | first run time (seconds) | average run time (seconds) |
+| -------------- | ------------------------ | -------------------------- |
+| `matmul_slow`  | 0.22                     | 0.22                       |
+| `matmul_fast1` | 0.23                     | 0.20                       |
+| `matmul_fast2` | 0.24                     | 0.21                       |
+| `matmul_fast3` | 0.20                     | 0.17                       |
+
