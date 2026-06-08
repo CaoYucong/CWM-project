@@ -180,7 +180,7 @@ Samples: 920  of event 'cycles:P', Event count (approx.): 807854210
 
 ## Question 6
 
-<img src="flamegraph.svg" alt="Flame Graph of Matmul_slow.py" style="zoom:50%;" />
+<img src="flamegraph_slow.svg" alt="Flame Graph of Matmul_slow.py" style="zoom:50%;" />
 
 #### a. Which function dominates runtime?
 
@@ -203,10 +203,25 @@ Performances List:
 
 Due to the fact that the `matmul_fast` is edited and re-compiled, the first-time running would take a bit longer, so the average running time is taken after the first time is removed.
 
-| name           | first run time (seconds) | average run time (seconds) | Comments           |
-| -------------- | ------------------------ | -------------------------- | ------------------ |
-| `matmul_slow`  | 0.22                     | 0.22                       | Original algorithm |
-| `matmul_fast1` | 0.23                     | 0.20                       |                    |
-| `matmul_fast2` | 0.24                     | 0.21                       | Only               |
-| `matmul_fast3` | 0.20                     | 0.17                       |                    |
+| name           | first run time (seconds) | average run time (seconds) | Comments                                                     |
+| -------------- | ------------------------ | -------------------------- | ------------------------------------------------------------ |
+| `matmul_slow`  | 0.22                     | 0.22                       | Original algorithm                                           |
+| `matmul_fast1` | 0.23                     | 0.20                       | Although A and C are taken row by row, B is not being taken row by row. |
+| `matmul_fast2` | 0.24                     | 0.21                       | Only reducing no. of loops is not sufficient.                |
+| `matmul_fast3` | 0.20                     | 0.17                       | All entities of A and B are accessed row by row, which will make the algorithm more efficient. |
 
+Flame graph of slow
+
+<img src="flamegraph_slow.svg" alt="Flame Graph of Matmul_slow" style="zoom:50%;" />
+
+Flame graph of fast1
+
+<img src="flamegraph_fast1.svg" alt="Flame Graph of Matmul_fast1" style="zoom:50%;" />
+
+Flame graph of fast2
+
+<img src="flamegraph_fast2.svg" alt="Flame Graph of Matmul_fast2" style="zoom:50%;" />
+
+Flame graph of fast3
+
+<img src="flamegraph_fast3.svg" alt="Flame Graph of Matmul_fast3" style="zoom:50%;" />

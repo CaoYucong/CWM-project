@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DIR="/home/ubuntu/CWM-FDI/"
+DIR="/home/ubuntu/CWM-project/"
 INPUT="${1:-out.perf}"
 OUTPUT="${2:-flamegraph.svg}"
 
@@ -14,21 +14,12 @@ fi
 STACKCOLLAPSE="$(command -v stackcollapse-perf.pl || true)"
 FLAMEGRAPH="$(command -v flamegraph.pl || true)"
 
-<<<<<<< HEAD
-if [[ -z "$STACKCOLLAPSE" && -x "../scripts/FlameGraph/stackcollapse-perf.pl" ]]; then
-  STACKCOLLAPSE="../scripts/FlameGraph/stackcollapse-perf.pl"
-fi
-
-if [[ -z "$FLAMEGRAPH" && -x "../scripts/FlameGraph/flamegraph.pl" ]]; then
-  FLAMEGRAPH="../scripts/FlameGraph/flamegraph.pl"
-=======
 if [[ -z "$STACKCOLLAPSE" && -x "$DIR/scripts/FlameGraph/stackcollapse-perf.pl" ]]; then
   STACKCOLLAPSE="$DIR/scripts/FlameGraph/stackcollapse-perf.pl"
 fi
 
 if [[ -z "$FLAMEGRAPH" && -x "$DIR/scripts/FlameGraph/flamegraph.pl" ]]; then
   FLAMEGRAPH="$DIR/scripts/FlameGraph/flamegraph.pl"
->>>>>>> 7bc8ab5d6dc156dbf0b31aa6f06577ef1b367360
 fi
 
 if [[ -z "$STACKCOLLAPSE" || -z "$FLAMEGRAPH" ]]; then
