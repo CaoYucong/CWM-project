@@ -196,3 +196,107 @@ Both match with my intuition, since the slow algorithm involves more memory acce
 
 ### Question 8
 
+![](turbostatQ5.png)
+
+Yes. Deeper sleep state also indicates longer wake-up time. For some delay-sensitive system (stocks, gamings), it would not be a good idea to keep the CPUs in a very deep sleep state.
+
+### Question 9
+
+Assume the data canter has the same power per core as when this machine is running in matrix multiplexing, an 128 core computer has approximately
+$$
+\frac{11.54W}{4\text{ cores}} \times 128\text{ cores} \approx 300W
+$$
+of power, then the total power will be 
+$$
+300W \times 10K = 3MW \text{  if there are 10K CPUs, or } \\
+300W \times 100S = 30MW \text{  if there are 100K CPUs}
+$$
+As all the power eventually turns into heat, making use of the heat generated or only dissipating the heat would all be a problem to consider.
+
+## Network Activity
+
+### Question 10
+
+#### Part a
+
+$8 $ seconds since $1B = 8b$.
+
+#### Part b
+
+At least $0.3\times 8 = 2.4Joules$, at most $1.0\times 8 = 8Joules$.
+
+#### Part c
+
+The data is at least transferred from the local router, assuming same Ethernet port and same transmitting power and receiving power (which in reality I think transmitting power would be a bit higher), the total power is already $16$ Joules. If similar architecture is used at the sending terminal, another $16$ Joules would be added. The rest of the energy would be from the transmitter, based on how the network is set up, at least one transmitter receive and transmit power would also be $16$ Joules,so at least $48 $ Joules with only one middle node.
+
+Need to know the exact architecture of the network and what route is chosen between sender and receiver.
+
+### Question 11
+
+#### Part a
+
+$889MB$ for $32s$.
+
+#### Part b
+
+```
+sg_90k_part1.json?down 100%[===========================>] 878.89M   109MB/s    in 8.1s    
+
+2026-06-09 15:31:12 (109 MB/s) - ‘sg_90k_part1.json?download=true’ saved [921586083/921586083]
+
+8.281830 sec
+Pkg_J
+61.82
+```
+
+### Part c
+
+The actual power consumption is $61.82$ Joules, subtract the background (assuming idle $3W$) power $3W\times 8.1s = 24.3$ Joules. Which is still a lot higher than expected.
+
+The reason for this might be due to data verification process, Internet reconnect for each package arriving.
+
+### Question 12
+
+The power consumption is around 
+
+20W for 4K60fps
+
+10W for 144p60fps
+
+9W for 1080p60fps
+
+7.5W for 720p60fps
+
+5.2W for 480p
+
+5W for 360p
+
+The power consumption is direct related to the resolution of the video decoding from Internet stream packages in the buffer. And the Internet power consumption is also directly related to the resolution, given the same playback speed, higher resolution means higher information flow rate.
+
+This is a huge power consumption, not only increases the carbon emissions, but would also be a problem to the batteries if we are considering to make this SoC into a portable device.
+
+The energy efficiency for video can be evaluated from different aspects, for example, we can compare this power to a professional H265 decoder in M series chip from Apple to get an efficiency.
+
+## Thought Experiments - Carbon Footprint
+
+### Question 13
+
+Use the carbon intensity in UK : $170 gCO_{2eq}/kWh$ to calculate.
+$$
+\text{matmulslow} = 195Joules = 0.0092gCO_{2eq}, \\ \text{matmul fast} = 125Joules = 0.0059gCO_{2eq} \\
+\text{savings} = 0.0033gCO_{2eq} \approx \text{30\% savings}
+$$
+Learn to optimize the algorithm before implementing them at a large scale, use a dedicated machine to increase efficiency, for example, GPU is good at doing simple matrix calculations.
+
+### Question 14
+
+The average daily $CO_2$ intensity of California is around $80gCO_{2eq}/KWh$.
+$$
+0.34Wh = 1224Joule \\
+\text{total energy on text query infering} = 3.06\times 10^{12} \text{ Joules per day} \\
+\text{daily footprint} \approx 70 \text{ tons of }CO_2\text{ emission (if all electricity is produced in California)}
+$$
+[Some document](https://arxiv.org/pdf/2601.08844) indicates that one single training run consumes 550 tons of $CO_2$ equivalent. But compared to this single emission, the 70 tons per day emission is possible to be more than the training emission ([LLMCO2: Advancing Accurate Carbon Footprint Prediction for LLM Inferences](https://arxiv.org/html/2410.02950v1)). We are not taking winter into account, since in winter the carbon intensity would be higher for majority of countries.
+
+Compared to an [standard annual home electricity consumption in UK](https://assets.publishing.service.gov.uk/media/67e3eae39c9de963bc39b482/consumption-level-review-march-2025-methodology.pdf)($3400kWh/year \rightarrow 578kg CO_{2eq}$ per year in Uk), [the total CO2 emission to train GPT-4](https://openreview.net/pdf?id=86NT1eVitH) is around 5,184 tons, which is sufficient for a typical UK family to use for 8000 years.s
+
