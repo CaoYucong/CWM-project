@@ -31,7 +31,7 @@ CPU time counter: 247368088358195 ns
 CPU time diff: 14495 ns
 ```
 
-Question 2
+### Question 2
 
 ```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ python3 rdtime.py 
