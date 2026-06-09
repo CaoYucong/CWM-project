@@ -4,19 +4,21 @@ import matplotlib.pyplot as plt
 
 
 # parameters to modify 
-filename="/home/ubuntu/CWM-project/assignment2/time_py.txt"
-label='c'
-xlabel = 'time(ns)'
+filename="/home/ubuntu/CWM-project/assignment2/ping1000_00001.log"
+label='CDF'
+xlabel = 'time(ms)'
 ylabel = '% entries under'
-title='CDF of One Million Repeat of rdtime with c on single core'
-fig_name='trash.png'
+title='CDF of One 1000 Repeat of Self-Ping Interval 0.0001'
+fig_name='/home/ubuntu/CWM-project/assignment2/trash.png'
 bins=100 #adjust the number of bins to your plot
-max_examples = 10000
+#max_examples = 10000
 
 ## load data from input file
-t = np.loadtxt(filename, delimiter=" ", dtype="float")[1:max_examples]
-t = [x for x in t if x <= 500]
+t = np.loadtxt(filename, delimiter=" ", dtype="float") #[1:max_examples]
+t = t[:, 1]
 print(np.average(t))
+#t = [x for x in t if x <= 500]
+#print(np.average(t))
 
 ## if your data is "X Y" (2 cols), use the following line
 #plt.plot(t[:,0], t[:,1], label=label)  # Plot some data on the (implicit) axes.

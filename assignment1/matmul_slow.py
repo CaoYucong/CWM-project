@@ -28,12 +28,19 @@ def zero_matrix(n: int) -> Matrix:
 # Intentionally simple O(n^3) matrix multiplication.
 # This loop order is correct but cache-unfriendly for matrix B.
 def matmul_slow(a: Matrix, b: Matrix, c: Matrix, n: int) -> None:
+    average_single_tile_diff = 0; # calculate the single tile time consumption
     for i in range(n):
         for j in range(n):
             total = 0.0
+            counter = get_cpu_time_counter()
             for k in range(n):
                 total += a[i][k] * b[k][j]
+            counter2 = get_cpu_time_counter()
+            average_single_tile_diff = average_single_tile_diff + counter2 - counter 
+                # add up the total time consumed
             c[i][j] = total
+    average_single_tile_diff = average_single_tile_diff / (n * n) # find average
+    print('The Average single tile time is :: ', average_single_tile_diff, 'cycles')
 
 
 def checksum(m: Matrix, n: int) -> float:
@@ -69,6 +76,9 @@ def parse_args(argv: list[str]) -> tuple[int, int]:
 
     return n, reps
 
+import time
+def get_cpu_time_counter():
+	return time.perf_counter_ns()
 
 def main(argv: list[str]) -> int:
     n, reps = parse_args(argv)
@@ -80,7 +90,11 @@ def main(argv: list[str]) -> int:
     c = zero_matrix(n)
 
     for _ in range(reps):
+        counter = get_cpu_time_counter()
         matmul_slow(a, b, c, n)
+        counter2 = get_cpu_time_counter()
+        diff = counter2 - counter
+        print('matmul_slow function :: The', _, 'th run diff = ', diff)
 
     print(f"n={n} reps={reps} checksum={checksum(c, n):.6f}")
     return 0

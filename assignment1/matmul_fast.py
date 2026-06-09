@@ -99,6 +99,10 @@ def parse_args(argv: list[str]) -> tuple[int, int]:
         raise SystemExit(1)
 
     return n, reps
+    
+import time
+def get_cpu_time_counter():
+	return time.perf_counter_ns()
 
 
 def main(argv: list[str]) -> int:
@@ -111,7 +115,11 @@ def main(argv: list[str]) -> int:
     c = zero_matrix(n)
 
     for _ in range(reps):
-        matmul_fast1(a, b, c, n)
+        counter = get_cpu_time_counter()
+        matmul_fast3(a, b, c, n)
+        counter2 = get_cpu_time_counter()
+        diff = counter2 - counter
+        print('matmul_fast3 function :: The', _, 'th run diff = ', diff)
 
     print(f"n={n} reps={reps} checksum={checksum(c, n):.6f}")
     return 0

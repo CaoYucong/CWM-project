@@ -7,7 +7,7 @@
 
 ### Question 1
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ for i in 1 2 3 4 5 6 7 8 9 10; do python3 rdtime.py; done
 CPU time counter: 247367917243279 ns
 CPU time diff: 14185 ns
@@ -31,9 +31,9 @@ CPU time counter: 247368088358195 ns
 CPU time diff: 14495 ns
 ```
 
-### Question 2
+Question 2
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ python3 rdtime.py 
 CPU time counter: 256050674644392 ns
 CPU time diff: 13313 ns
@@ -48,7 +48,7 @@ CPU min diff time: 118 ns
 
 ### Question 3
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ./rdtime 10
 CPU frequency: 0.900 GHz
 Minimum consecutive TSC diff: 188 cycles
@@ -57,7 +57,7 @@ Approximate time: 208.89 ns
 
 ### Question 4
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ./rdtime 10
 CPU frequency: 3.600 GHz
 Minimum consecutive TSC diff: 50 cycles
@@ -72,7 +72,7 @@ Approximate time: 13.89 ns
 
 ### Question 6
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ taskset -c 1 ./rdtime 1000000
 CPU frequency: 3.600 GHz
 Minimum consecutive TSC diff: 44 cycles
@@ -105,7 +105,7 @@ The CPU might not be able to work continuously, due to the circuit architecture,
 
 ### Question 10
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ping 8.8.8.8 -c 10 -i 0.2
 PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
 64 bytes from 8.8.8.8: icmp_seq=1 ttl=113 time=3.30 ms
@@ -126,7 +126,7 @@ rtt min/avg/max/mdev = 3.169/3.220/3.304/0.051 ms
 
 ### Question 11
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ping www.pku.edu.cn -c 10 -i 0.2
 PING www.lb.pku.edu.cn (162.105.131.160) 56(84) bytes of data.
 
@@ -134,7 +134,7 @@ PING www.lb.pku.edu.cn (162.105.131.160) 56(84) bytes of data.
 10 packets transmitted, 0 received, 100% packet loss, time 1870ms
 ```
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ping www.titech.ac.jp -c 10 -i 0.2
 PING web-a1n.westeurope.cloudapp.azure.com (20.107.116.39) 56(84) bytes of data.
 
@@ -142,7 +142,7 @@ PING web-a1n.westeurope.cloudapp.azure.com (20.107.116.39) 56(84) bytes of data.
 10 packets transmitted, 0 received, 100% packet loss, time 1870ms
 ```
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ping www.mit.edu -c 10 -i 0.2
 PING e9566.dscb.akamaiedge.net (23.43.64.242) 56(84) bytes of data.
 64 bytes from a23-43-64-242.deploy.static.akamaitechnologies.com (23.43.64.242): icmp_seq=1 ttl=51 time=3.35 ms
@@ -165,7 +165,7 @@ Both China university and Japan university are not responding within 1.8s, might
 
 ### Question 12
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ ping 127.0.0.1 -c 10 -i 0.2
 PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
 64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.019 ms
@@ -186,7 +186,7 @@ rtt min/avg/max/mdev = 0.017/0.017/0.019/0.000 ms
 
 ### Question 13
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ sudo ping 127.0.0.1 -c 100 -i 0.01
 PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
 64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.012 ms
@@ -299,7 +299,7 @@ The minimum/max difference is quite small. It might comes from some interference
 
 ### Question 14
 
-```
+```bash
 ubuntu@ubuntu:~/CWM-project/assignment2$ sudo ping 127.0.0.1 -c 10000 -f
 PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
  
@@ -308,3 +308,200 @@ PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.002/0.002/0.012/0.000 ms, ipg/ewma 0.008/0.002 ms
 ```
 
+### Question 15
+
+![](/home/ubuntu/CWM-project/assignment2/ping001.png)
+
+![](/home/ubuntu/CWM-project/assignment2/ping0001.png)
+
+![](/home/ubuntu/CWM-project/assignment2/ping00001.png)
+
+
+
+### Question 16
+
+The round trip results are smaller with smaller ping interval, I think this is related to the dynamic resource control of the system, when the network is not under high pressure, there would be less resource, as when ping interval is $0.01 s$,but when the interval is smaller than $0.001s$, the ping requests are queued up,which results in larger process resources being allocated to the network, which finally increases the ping round trip results.
+
+## Performance
+
+### Question 17
+
+Run more resource-consuming process to significantly reduce the CPU resource made available to 
+
+rdtime.c.
+
+### Question 18
+
+Change this
+
+```c
+    /*
+     * Collect TSC readings.
+     */
+    for (size_t i = 0; i < num; i++) {
+        timestamps[i] = read_tsc();
+    }
+
+    /*
+     * Initialize minimum difference using first pair.
+     */
+    uint64_t min_diff = timestamps[1] - timestamps[0];
+
+    /*
+     * Compute all consecutive differences and track minimum.
+     */
+    for (size_t i = 1; i < num; i++) {
+        uint64_t diff = timestamps[i] - timestamps[i - 1];
+        diffs[i - 1] = diff;
+
+        if (diff < min_diff) {
+            min_diff = diff;
+        }
+    }
+```
+
+to 
+
+```c
+    /*
+    * Collect TSC readings and find smallest interval
+    */
+	uint64_t min_diff = read_tsc(), last_tsc = 0, diff = 0;
+	min_diff = read_tsc() - min_diff;
+	for(size_t i = 0; i < num; ++i) {
+        last_tsc = read_tsc();
+        diff = read_tsc() - last_tsc;
+        if (diff < min_diff) { min_diff = diff; }
+    }
+```
+
+This new code decreases the min_diff by:
+
+- Avoiding accessing different memory block throughout the memory.
+- Avoiding the time spent by the `if` sentence.
+
+Result:
+
+```bash
+ubuntu@ubuntu:~/CWM-project/assignment2$ for i in 1 2 3 4 5 6 7 8 9 10; do ./rdtime; done
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 64 cycles
+Approximate time: 17.78 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 62 cycles
+Approximate time: 17.22 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 64 cycles
+Approximate time: 17.78 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 66 cycles
+Approximate time: 18.33 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 62 cycles
+Approximate time: 17.22 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 64 cycles
+Approximate time: 17.78 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 48 cycles
+Approximate time: 13.33 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 62 cycles
+Approximate time: 17.22 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 62 cycles
+Approximate time: 17.22 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 64 cycles
+Approximate time: 17.78 ns
+ubuntu@ubuntu:~/CWM-project/assignment2$ for i in 1 2 3 4 5 6 7 8 9 10; do ./rdtime_fast; done
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.56 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 36 cycles
+Approximate time: 10.00 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.56 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.56 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.56 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.56 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.55 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.55 ns
+CPU frequency: 3.601 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.55 ns
+CPU frequency: 3.600 GHz
+Minimum consecutive TSC diff: 38 cycles
+Approximate time: 10.56 ns
+```
+
+### Question 19
+
+$38$ CPU cycles under $3.6GHz$ is $10.5ns$, while the ping averages at $0.0024ms$. So at most 230 times.
+
+### Question 20
+
+```bash
+ubuntu@ubuntu:~/CWM-project/assignment1$ python3 matmul_slow.py 
+The Average single tile time is ::  5916.4432373046875 cycles
+matmul_slow function :: The 0 th run diff =  100257093
+The Average single tile time is ::  5943.770446777344 cycles
+matmul_slow function :: The 1 th run diff =  100752055
+n=128 reps=2 checksum=107389.290000
+```
+
+```python
+# Intentionally simple O(n^3) matrix multiplication.
+# This loop order is correct but cache-unfriendly for matrix B.
+def matmul_slow(a: Matrix, b: Matrix, c: Matrix, n: int) -> None:
+    average_single_tile_diff = 0; # calculate the single tile time consumption
+    for i in range(n):
+        for j in range(n):
+            total = 0.0
+            counter = get_cpu_time_counter()
+            for k in range(n):
+                total += a[i][k] * b[k][j]
+            counter2 = get_cpu_time_counter()
+            average_single_tile_diff = average_single_tile_diff + counter2 - counter 
+                # add up the total time consumed
+            c[i][j] = total
+    average_single_tile_diff = average_single_tile_diff / (n * n) # find average
+    print('The Average single tile time is :: ', average_single_tile_diff, 'cycles')
+```
+
+### Question 21
+
+```
+ubuntu@ubuntu:~/CWM-project/assignment1$ python3 matmul_fast.py 
+matmul_fast1 function :: The 0 th run diff =  85798849
+matmul_fast1 function :: The 1 th run diff =  85344555
+n=128 reps=2 checksum=107389.290000
+ubuntu@ubuntu:~/CWM-project/assignment1$ python3 matmul_fast.py 
+matmul_fast2 function :: The 0 th run diff =  88815375
+matmul_fast2 function :: The 1 th run diff =  88691752
+n=128 reps=2 checksum=107389.290000
+ubuntu@ubuntu:~/CWM-project/assignment1$ python3 matmul_fast.py 
+matmul_fast3 function :: The 0 th run diff =  72651099
+matmul_fast3 function :: The 1 th run diff =  71799859
+n=128 reps=2 checksum=107389.290000
+```
+
+The conclusion is the same as previous assignment: the fast2 is only reducing the loops while keeping an $O(n^3)$ algorithm so improvement not significant. The fast1 made accessing matrix $A$ row by row, and fast3 made both $A$ and $B$ accessed row by row, so fast3 is fastest, and fast 1is the second fastest.
+
+### Question 23
+
+- Access the memory right following the cache scheme of the computer to reduce cache miss. (Locality)
+- Access the memory only if necessary (reduce large array reading writing..etc.)
+- Always try to find algorithm with lower time and space complexity.
