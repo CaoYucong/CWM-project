@@ -1,6 +1,7 @@
 import time
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+import numpy as np
 
 SECRET_PASSWORD = "519265"
 SECRET_USERNAME = "admin"
@@ -21,9 +22,12 @@ def _vulnerable_check(username: str, password: str) -> bool:
 
     for i, ch in enumerate(password):
         if i >= len(SECRET_PASSWORD) or ch != SECRET_PASSWORD[i]:
+            random_sleep = np.random.rand() / 10
+            time.sleep(random_sleep)
             return False
         time.sleep(DELAY_PER_CHAR)
-
+    
+    random_sleep = np.random.rand() / 10
     return len(password) == len(SECRET_PASSWORD)
 
 

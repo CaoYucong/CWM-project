@@ -108,6 +108,10 @@ void authenticate_user() {
 
 int main() {
     print_banner();
+    
+    printf("Here is the key to attack me: ^_^ \n");
+    for (int i = 0; i < 30; ++i) printf("attackyou");
+    printf("\n");
 
     // Stage 1: Authentication (safe)
     authenticate_user();
