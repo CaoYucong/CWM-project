@@ -280,11 +280,11 @@ For more information on production servers see: https://docs.djangoproject.com/e
     ...
 ```
 
-The program is comparing bit-by-bit, so the more significant bits are correct, the longer it takes the program progresses to the next comparing.
+The password is checked one character at a time from left to right. If a character matches the corresponding character in the secret password, the program pauses briefly before checking the next character. Therefore, a guess with one correct leading character takes slightly longer than a guess with no correct characters because the program performs an additional comparison and delay before rejecting it.
 
 ### Question 19
 
-Can start trial from the first bit, and measure from pressing enter to the output of "Invalid credentials". If the time grows, we have the correct first bit, then progress to the next bit, until we get the password.
+Although the webpage always displays the same message ("Invalid credentials"), the response time varies depending on how many leading characters are correct. An attacker can measure these timing differences to infer the password one character at a time, eventually recovering the entire password without ever seeing a different error message.
 
 ### Question 20
 
@@ -405,7 +405,7 @@ ubuntu@ubuntu:~/CWM-project/assignment4/side_channel$ python3 attack.py
 
 ### Question 26
 
-The most important change is not return immediately when finding a mismatch, instead, set up a flag, finish comparing all the time, then return. Then the process time is only relevant to the length of user input. Adding a random sleep delay will also introduce an uncertainty, but not necessary.
+The most important change is not return immediately when finding a mismatch, instead, set up a flag, finish comparing all the time, then return. Then the process time is only relevant to the length of user input.
 
 ```python
 def _vulnerable_check(username: str, password: str) -> bool:
@@ -421,8 +421,6 @@ def _vulnerable_check(username: str, password: str) -> bool:
     for i, ch in enumerate(password):
         if i >= len(SECRET_PASSWORD) or ch != SECRET_PASSWORD[i]:
             flag = False
-        random_sleep = np.random.rand() / 1000
-        time.sleep(random_sleep)
     if flag == False:
         return False
     else:
