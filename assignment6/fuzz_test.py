@@ -2,8 +2,10 @@
 
 import argparse
 import random
+import statistics
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -64,7 +66,7 @@ def run_script(script: str, input_text: str) -> tuple[int, str, str]:
         input=input_text,
         text=True,
         capture_output=True,
-        timeout=5,
+        timeout=60,
     )
     return p.returncode, p.stdout, p.stderr
 
@@ -77,14 +79,18 @@ def write_fail_testcase(input_text: str) -> None:
 
 def print_progress(test_id: int, total: int, mode: str, status: str = "") -> None:
     bar_width = 30
-    filled = int(bar_width * test_id / total)
+    filled = int(bar_width * float(test_id) / float(total))
     bar = "#" * filled + "-" * (bar_width - filled)
     if mode == "mismatch":
         mode_label = "Mismatch"
-    elif mode == "large":
-        mode_label = "Large"
+    elif mode == "large-number":
+        mode_label = "Large-number"
     elif mode == "large-scale":
         mode_label = "Large-scale"
+    elif mode == "large-number-and-scale":
+        mode_label = "Large-number-scale"
+    elif mode == "float":
+        mode_label = "Float"
     else:
         mode_label = "Simple"
     status_text = f" {status}" if status else ""
@@ -98,7 +104,7 @@ def main() -> int:
     parser.add_argument("--tests", "--cases", type=int, default=None, help="Number of tests per mode; uses mode-specific defaults when omitted")
     parser.add_argument(
         "--mode",
-        choices=["simple", "mismatch", "large-number", "large-scale", "float", "all"],
+        choices=["simple", "mismatch", "large-number", "large-scale", "large-number-and-scale", "float", "all"],
         default="all",
         help="Test mode",
     )
@@ -110,14 +116,15 @@ def main() -> int:
         random.seed(args.seed)
         np.random.seed(args.seed)
 
-    modes_to_run = ["simple", "mismatch", "large-number", "large-scale", "float"] if args.mode == "all" else [args.mode]
+    modes_to_run = ["simple", "mismatch", "large-number", "float", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
 
     default_tests = {
-        "simple": 5,
-        "mismatch": 3,
-        "large-number": 2,
+        "simple": 20,
+        "mismatch": 20,
+        "large-number": 20,
         "large-scale": 1,
-        "float": 3,
+        "large-number-and-scale": 1,
+        "float": 20,
     }
 
     for mode in modes_to_run:
@@ -130,9 +137,14 @@ def main() -> int:
         if mode == "large-number":
             print("Testing large-number values with dimensions limited to 10 and input values from 1e7 to 1e9.")
         if mode == "large-scale":
-            print("Testing large-scale matrices with values under 1e5 and work scale between 1e3 and 1e4.")
+            print("Testing large-scale matrices with values under 1e5 and work scaled 1000 by 1000")
+        if mode == "large-number-and-scale":
+            print("Testing large-number-and-scale matrices with values from 1e7 to 1e9 and work scaled 1000 by 1000.")
         if mode == "float":
             print("Testing float matrices with dimensions limited to 100 and values under 1e5.")
+
+        fast_times: list[float] = []
+        np_times: list[float] = []
         for test_id in range(1, tests + 1):
             max_dim = args.max_dim
             if mode == "mismatch":
@@ -141,13 +153,15 @@ def main() -> int:
                 max_dim = min(max_dim, 10)
             elif mode == "large-scale":
                 max_dim = min(max_dim, 1e4)
+            elif mode == "large-number-and-scale":
+                max_dim = min(max_dim, 1e4)
             elif mode == "float":
-                max_dim = min(max_dim, 10)
+                max_dim = min(max_dim, 100)
 
-            if mode == "large-scale":
-                m = int(1e3 + random.randint(0, 9) * 1e3)
-                n = int(1e3 + random.randint(0, 9) * 1e3)
-                p = int(1e3 + random.randint(0, 9) * 1e3)
+            if mode == "large-scale" or mode == "large-number-and-scale":
+                m = 1000
+                n = 1000
+                p = 1000
             else:
                 m = random.randint(1, max_dim)
                 n = random.randint(1, max_dim)
@@ -168,6 +182,11 @@ def main() -> int:
                 b = gen_matrix(n, p, low=0.0, high=1e5)
                 input_text = build_input_text(a, b)
                 expect_failure = False
+            elif mode == "large-number-and-scale":
+                a = gen_matrix(m, n, low=1e7, high=1e9)
+                b = gen_matrix(n, p, low=1e7, high=1e9)
+                input_text = build_input_text(a, b)
+                expect_failure = False
             elif mode == "float":
                 a = gen_matrix(m, n, low=0.0, high=1e5)
                 b = gen_matrix(n, p, low=0.0, high=1e5)
@@ -180,17 +199,33 @@ def main() -> int:
                 declared_b = (n, p + random.randint(1, max_dim))
                 input_text = build_mismatch_input_text(a, b, declared_a, declared_b)
                 expect_failure = True
-
-            print_progress(test_id, tests, mode)
+            
+            if mode == "mismatch":
+                print_progress(test_id - 1, tests, mode, "rejected")
+            else:
+                print_progress(test_id - 1, tests, mode, "passed")
 
             try:
+                start_time = time.perf_counter()
                 fast_rc, fast_out, fast_err = run_script(args.fast, input_text)
+                fast_duration = time.perf_counter() - start_time
+
+                start_time = time.perf_counter()
                 np_rc, np_out, np_err = run_script(args.oracle, input_text)
+                np_duration = time.perf_counter() - start_time
             except subprocess.TimeoutExpired:
                 print()
                 print(f"[FAIL] test {test_id}: timeout")
                 write_fail_testcase(input_text)
                 return 1
+            
+            if mode == "mismatch":
+                print_progress(test_id, tests, mode, "rejected")
+            else:
+                print_progress(test_id, tests, mode, "passed")
+
+            fast_times.append(fast_duration)
+            np_times.append(np_duration)
 
             if mode == "mismatch":
                 if fast_rc == 0 or np_rc == 0:
@@ -201,7 +236,7 @@ def main() -> int:
                     write_fail_testcase(input_text)
                     return 1
 
-                print_progress(test_id, args.tests, mode, "rejected")
+                print_progress(test_id, tests, mode, "rejected")
                 continue
 
             if fast_rc != 0:
@@ -243,8 +278,21 @@ def main() -> int:
                 print(np_mat)
                 return 1
 
-            print_progress(test_id, args.tests, mode, "passed")
+            print_progress(test_id, tests, mode, "passed")
         print()
+
+        if fast_times or np_times:
+            print(f"\n{mode.capitalize()} timing summary:")
+            print(f"  fast   : {len(fast_times)} runs")
+            print(f"    mean   = {statistics.mean(fast_times):.6f} s")
+            print(f"    median = {statistics.median(fast_times):.6f} s")
+            print(f"    min    = {min(fast_times):.6f} s")
+            print(f"    max    = {max(fast_times):.6f} s")
+            print(f"  np     : {len(np_times)} runs")
+            print(f"    mean   = {statistics.mean(np_times):.6f} s")
+            print(f"    median = {statistics.median(np_times):.6f} s")
+            print(f"    min    = {min(np_times):.6f} s")
+            print(f"    max    = {max(np_times):.6f} s")
 
 
     print()

@@ -223,7 +223,7 @@ Europe and North America, especially the Eastern United States
 
 ### Question 5
 
-The only public threat that's been made was a single tweet (account since deleted) threatening both media and government outlets for "spreading false propaganda."
+The online portal of the swedish government became in accessible during the attack. Public service is affected.
 
 ### Question 6
 
