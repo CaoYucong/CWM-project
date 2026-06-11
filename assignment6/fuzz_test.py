@@ -99,8 +99,8 @@ def print_progress(test_id: int, total: int, mode: str, status: str = "") -> Non
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fast", default="/home/ubuntu/CWM-project/assignment6/matmul_fast.py", help="Fast implementation")
-    parser.add_argument("--oracle", default="/home/ubuntu/CWM-project/assignment6/matmul_np.py", help="NumPy implementation")
+    parser.add_argument("--fast", default="matmul_fast.py", help="Fast implementation")
+    parser.add_argument("--oracle", default="matmul_np.py", help="NumPy implementation")
     parser.add_argument("--tests", "--cases", type=int, default=None, help="Number of tests per mode; uses mode-specific defaults when omitted")
     parser.add_argument(
         "--mode",
