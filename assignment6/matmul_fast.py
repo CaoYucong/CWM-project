@@ -21,107 +21,159 @@ def init_matrix(n: int, seed: float) -> Matrix:
     ]
 
 #Zero out output entries.
-def zero_matrix(n: int) -> Matrix:
-    return [[0.0 for _ in range(n)] for _ in range(n)]
+def zero_matrix(rows: int, cols: int) -> Matrix:
+    return [[0.0 for _ in range(cols)] for _ in range(rows)]
 
 #Reorder loops to improve locality
-def matmul_fast1(a: Matrix, b: Matrix, c: Matrix, n: int) -> None:
-    for i in range(n):
+def matmul_fast1(a: Matrix, b: Matrix, c: Matrix, m: int, k: int, n: int) -> None:
+    for i in range(m):
         row_ai = a[i]
         row_ci = c[i]
         for j in range(n):
             total = 0.0
-            for k in range(n):
-                total += row_ai[k] * b[k][j]
+            for kk in range(k):
+                total += row_ai[kk] * b[kk][j]
             row_ci[j] = total
 
 #Reorder loops to reduce inner loops
-def matmul_fast2(a: Matrix, b: Matrix, c: Matrix, n: int) -> None:
-    for i in range(n):
+def matmul_fast2(a: Matrix, b: Matrix, c: Matrix, m: int, k: int, n: int) -> None:
+    for i in range(m):
         row_ai = a[i]
         row_ci = c[i]
         for j in range(n):
             row_ci[j] = 0.0
-        for k in range(n):
-            aik = row_ai[k]
-            row_bk = b[k]
+        for kk in range(k):
+            aik = row_ai[kk]
+            row_bk = b[kk]
             for j in range(n):
-              row_ci[j] += aik * row_bk[j]
+                row_ci[j] += aik * row_bk[j]
 
 def transpose(m: Matrix) -> Matrix:
-    n = len(m)
-    return [[m[i][j] for i in range(n)] for j in range(n)]
+    rows = len(m)
+    cols = len(m[0]) if rows else 0
+    return [[m[i][j] for i in range(rows)] for j in range(cols)]
 
 #Matrix transpose method
-def matmul_fast3(a: Matrix, b: Matrix, c: Matrix, n: int) -> None:
+def matmul_fast3(a: Matrix, b: Matrix, c: Matrix, m: int, k: int, n: int) -> Matrix:
     bt = transpose(b)
 
-    for i in range(n):
+    for i in range(m):
         row_ai = a[i]
         row_ci = c[i]
         for j in range(n):
             total = 0.0
             row_btj = bt[j]
-            for k in range(n):
-                total += row_ai[k] * row_btj[k]
+            for kk in range(k):
+                total += row_ai[kk] * row_btj[kk]
             row_ci[j] = total
 
+    return c
 
-def checksum(m: Matrix, n: int) -> float:
+
+def checksum(m: Matrix, rows: int, cols: int) -> float:
     total = 0.0
-    step = (n // 16) + 1
-    for i in range(0, n, step):
-        for j in range(0, n, step):
+    step = (min(rows, cols) // 16) + 1
+    for i in range(0, rows, step):
+        for j in range(0, cols, step):
             total += m[i][j]
     return total
 
 
 def usage(prog: str) -> None:
     print(
-        f"Usage: {prog} [matrix_size] [repetitions]\n"
-        "  matrix_size  : matrix dimension N for an N x N multiply (default: 192)\n"
+        f"Usage: {prog} [repetitions]\n"
         "  repetitions  : number of repeated multiplies (default: 1)",
         file=sys.stderr,
     )
 
 
-def parse_args(argv: list[str]) -> tuple[int, int]:
-    #Default values to use when none provided.
-    n = 128
-    reps = 2
+def parse_args(argv: list[str]) -> int:
+    reps = 1
 
-    if len(argv) > 1:
-        n = int(argv[1])
     if len(argv) > 2:
-        reps = int(argv[2])
-    if len(argv) > 3 or n <= 0 or reps <= 0:
+        usage(argv[0])
+        raise SystemExit(1)
+    if len(argv) == 2:
+        reps = int(argv[1])
+    if reps <= 0:
         usage(argv[0])
         raise SystemExit(1)
 
-    return n, reps
-    
+    return reps
+
 import time
-def get_cpu_time_counter():
-	return time.perf_counter_ns()
+
+def get_cpu_time_counter() -> int:
+    return time.perf_counter_ns()
+
+
+def read_matrix(tokens: list[str], position: int) -> tuple[Matrix, int]:
+    if position + 2 > len(tokens):
+        raise ValueError("unexpected end of input while reading matrix dimensions")
+
+    rows = int(tokens[position])
+    cols = int(tokens[position + 1])
+    position += 2
+
+    matrix: Matrix = []
+    for _ in range(rows):
+        row: list[float] = []
+        for _ in range(cols):
+            if position >= len(tokens):
+                raise ValueError("unexpected end of input while reading matrix values")
+            row.append(float(tokens[position]))
+            position += 1
+        matrix.append(row)
+
+    return matrix, position
 
 
 def main(argv: list[str]) -> int:
-    n, reps = parse_args(argv)
+    reps = parse_args(argv)
 
-    #Initialise around a seed.
-    a = init_matrix(n, 1.0)
-    b = init_matrix(n, 2.0)
+    tokens = sys.stdin.read().strip().split()
+    a, pos = read_matrix(tokens, 0)
+    b, pos = read_matrix(tokens, pos)
 
-    c = zero_matrix(n)
+    if not a or not b:
+        print("Error: empty matrix input", file=sys.stderr)
+        return 1
 
-    for _ in range(reps):
+    m = len(a)
+    k = len(a[0])
+    if any(len(row) != k for row in a):
+        print("Error: inconsistent row length in matrix A", file=sys.stderr)
+        return 1
+
+    if len(b) == 0 or any(len(row) != len(b[0]) for row in b):
+        print("Error: inconsistent row length in matrix B", file=sys.stderr)
+        return 1
+
+    if len(b) != k:
+        print(
+            f"Error: matrix dimensions incompatible for multiplication: "
+            f"A is {m}x{k}, B is {len(b)}x{len(b[0])}",
+            file=sys.stderr,
+        )
+        return 1
+
+    n = len(b[0])
+    c = zero_matrix(m, n)
+
+    for i in range(reps):
         counter = get_cpu_time_counter()
-        matmul_fast3(a, b, c, n)
+        c = matmul_fast3(a, b, c, m, k, n)
         counter2 = get_cpu_time_counter()
         diff = counter2 - counter
-        print('matmul_fast3 function :: The', _, 'th run diff = ', diff)
+        # print(f"matmul_fast3 function :: The {i} th run diff = {diff}")
 
-    print(f"n={n} reps={reps} checksum={checksum(c, n):.6f}")
+    # print(
+    #     f"m={m} k={k} n={n} reps={reps} checksum={checksum(c, m, n):.6f}"
+    # )
+
+    for row in c:
+        print(*row)
+
     return 0
 
 
