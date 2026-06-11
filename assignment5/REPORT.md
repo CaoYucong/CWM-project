@@ -70,6 +70,8 @@ Name:	www.google.com
 Address: 2001:4860:4829:7700::
 ```
 
+DNS successfully translated each domain name into one or more IP addresses. Oxford and Baidu used CNAME records before reaching the final addresses, while Google returned multiple IPv4 and IPv6 addresses, demonstrating load balancing and distributed infrastructure.
+
 ### Question 2
 
 ```
@@ -85,7 +87,7 @@ Name:	www.ox.ac.uk.cdn.cloudflare.net
 Address: 104.20.34.13
 ```
 
-We are actually looking up the ip of the canonical name rather the real ox.ac.uk.
+We are actually looking up the ip of the canonical name rather the real ox.ac.uk, which indicates that the website is protected and accelerated by Cloudflare's CDN. Two IPv4 addresses were returned, allowing traffic to be distributed across multiple servers.
 
 ### Question 3
 
@@ -147,7 +149,7 @@ Address: 172.66.169.161
 ------------
 ```
 
-`norec` means no recursive lookup.
+`norec` means no recursive lookup. The result was the same as the recursive query because my local DNS resolver already had the answer cached. The `-norec` option disables recursive resolution and requests only information already known by the DNS server.
 
 ### Question 4
 
@@ -175,6 +177,8 @@ Name:	www.ox.ac.uk.cdn.cloudflare.net
 Address: 172.66.169.161
 ```
 
+I queried the domain using OpenDNS (208.67.222.222) and Google DNS (8.8.8.8). Both DNS providers successfully resolved the domain name and returned valid IP addresses. This demonstrates that public DNS services can independently resolve the same domain.
+
 ### Question 5
 
 ```
@@ -184,6 +188,8 @@ Address:	127.0.0.53#53
 
 ** server can't find 123123321uiajfhavdfgaskvwsadfr3qw.com: NXDOMAIN
 ```
+
+When I attempted to resolve a non-existent domain, the DNS server returned an `NXDOMAIN` response. This indicates that the requested domain name does not exist in the DNS and therefore cannot be resolved to an IP address.
 
 ### Question 6
 
@@ -195,7 +201,7 @@ ubuntu@ubuntu:~/CWM-project$ nslookup 8.8.8.8
 8.8.8.8.in-addr.arpa	name = dns.google.
 ```
 
-I think not all of the server installed the function to support reverse checking.
+Some addresses successfully returned hostnames because PTR records were configured. Other addresses did not return results because no reverse DNS records were available.
 
 ## DYN DNS Failure
 
@@ -229,6 +235,8 @@ The only public threat that's been made was a single tweet (account since delete
 - Companies and governments shouldn't rely on single solution of DNS server/ Instead, they should use multiple DNS service to limit the effect of one of the server being down.
 - Use redundant backups for server resources to improve resilience.
 - Spread the server so they are not on the same address.
+
+- Companies should not rely on a single DNS provider. A better defense is to use multiple DNS providers or secondary DNS, add failover and redundancy, and strengthen DDoS filtering, rate limiting, and monitoring. 
 
 ## DNS Failure Case Study
 

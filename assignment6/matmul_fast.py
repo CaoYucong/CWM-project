@@ -161,11 +161,10 @@ def main(argv: list[str]) -> int:
     c = zero_matrix(m, n)
 
     for i in range(reps):
-        counter = get_cpu_time_counter()
+        time1 = time.perf_counter()
         c = matmul_fast3(a, b, c, m, k, n)
-        counter2 = get_cpu_time_counter()
-        diff = counter2 - counter
-        # print(f"matmul_fast3 function :: The {i} th run diff = {diff}")
+        time2 = time.perf_counter()
+        # print(f"matmul_fast3 function :: The {i} th run time = {time2 - time1:.6f} seconds")
 
     # print(
     #     f"m={m} k={k} n={n} reps={reps} checksum={checksum(c, m, n):.6f}"

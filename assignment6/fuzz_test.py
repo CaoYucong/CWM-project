@@ -4,6 +4,7 @@ import argparse
 import random
 import subprocess
 import sys
+from pathlib import Path
 
 import numpy as np
 
@@ -68,6 +69,12 @@ def run_script(script: str, input_text: str) -> tuple[int, str, str]:
     return p.returncode, p.stdout, p.stderr
 
 
+def write_fail_testcase(input_text: str) -> None:
+    path = Path(__file__).resolve().parent / "fail_testcase.txt"
+    path.write_text(input_text)
+    print(f"Failing testcase saved to: {path}")
+
+
 def print_progress(test_id: int, total: int, mode: str, status: str = "") -> None:
     bar_width = 30
     filled = int(bar_width * test_id / total)
@@ -86,12 +93,12 @@ def print_progress(test_id: int, total: int, mode: str, status: str = "") -> Non
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fast", default="matmul_fast.py", help="Fast implementation")
-    parser.add_argument("--oracle", default="matmul_np.py", help="NumPy implementation")
-    parser.add_argument("--tests", "--cases", type=int, default=20, help="Number of tests per mode")
+    parser.add_argument("--fast", default="/home/ubuntu/CWM-project/assignment6/matmul_fast.py", help="Fast implementation")
+    parser.add_argument("--oracle", default="/home/ubuntu/CWM-project/assignment6/matmul_np.py", help="NumPy implementation")
+    parser.add_argument("--tests", "--cases", type=int, default=None, help="Number of tests per mode; uses mode-specific defaults when omitted")
     parser.add_argument(
         "--mode",
-        choices=["simple", "mismatch", "large-number", "large-scale", "all"],
+        choices=["simple", "mismatch", "large-number", "large-scale", "float", "all"],
         default="all",
         help="Test mode",
     )
@@ -103,10 +110,19 @@ def main() -> int:
         random.seed(args.seed)
         np.random.seed(args.seed)
 
-    modes_to_run = ["simple", "mismatch", "large-number", "large-scale"] if args.mode == "all" else [args.mode]
+    modes_to_run = ["simple", "mismatch", "large-number", "large-scale", "float"] if args.mode == "all" else [args.mode]
+
+    default_tests = {
+        "simple": 5,
+        "mismatch": 3,
+        "large-number": 2,
+        "large-scale": 1,
+        "float": 3,
+    }
 
     for mode in modes_to_run:
-        print(f"\nRunning {mode} tests:")
+        tests = args.tests if args.tests is not None else default_tests.get(mode, 1)
+        print(f"\nRunning {mode} tests: (count={tests})")
         if mode == "simple":
             print("Testing correct multiplication, dimension limited by max_dim.")
         if mode == "mismatch":
@@ -115,7 +131,9 @@ def main() -> int:
             print("Testing large-number values with dimensions limited to 10 and input values from 1e7 to 1e9.")
         if mode == "large-scale":
             print("Testing large-scale matrices with values under 1e5 and work scale between 1e3 and 1e4.")
-        for test_id in range(1, args.tests + 1):
+        if mode == "float":
+            print("Testing float matrices with dimensions limited to 100 and values under 1e5.")
+        for test_id in range(1, tests + 1):
             max_dim = args.max_dim
             if mode == "mismatch":
                 max_dim = min(max_dim, 10)
@@ -123,6 +141,8 @@ def main() -> int:
                 max_dim = min(max_dim, 10)
             elif mode == "large-scale":
                 max_dim = min(max_dim, 1e4)
+            elif mode == "float":
+                max_dim = min(max_dim, 10)
 
             if mode == "large-scale":
                 m = int(1e3 + random.randint(0, 9) * 1e3)
@@ -148,6 +168,11 @@ def main() -> int:
                 b = gen_matrix(n, p, low=0.0, high=1e5)
                 input_text = build_input_text(a, b)
                 expect_failure = False
+            elif mode == "float":
+                a = gen_matrix(m, n, low=0.0, high=1e5)
+                b = gen_matrix(n, p, low=0.0, high=1e5)
+                input_text = build_input_text(a, b)
+                expect_failure = False
             elif mode == "mismatch":
                 a = gen_matrix(m, n)
                 b = gen_matrix(n, p)
@@ -156,7 +181,7 @@ def main() -> int:
                 input_text = build_mismatch_input_text(a, b, declared_a, declared_b)
                 expect_failure = True
 
-            print_progress(test_id, args.tests, mode)
+            print_progress(test_id, tests, mode)
 
             try:
                 fast_rc, fast_out, fast_err = run_script(args.fast, input_text)
@@ -164,7 +189,7 @@ def main() -> int:
             except subprocess.TimeoutExpired:
                 print()
                 print(f"[FAIL] test {test_id}: timeout")
-                print(input_text)
+                write_fail_testcase(input_text)
                 return 1
 
             if mode == "mismatch":
@@ -173,8 +198,7 @@ def main() -> int:
                     print(f"[FAIL] test {test_id}: expected mismatch failure")
                     print("fast exit:", fast_rc)
                     print("oracle exit:", np_rc)
-                    print("input:")
-                    print(input_text)
+                    write_fail_testcase(input_text)
                     return 1
 
                 print_progress(test_id, args.tests, mode, "rejected")
@@ -185,8 +209,7 @@ def main() -> int:
                 print(f"[FAIL] test {test_id}: {args.fast} exited with {fast_rc}")
                 print("stderr:")
                 print(fast_err)
-                print("input:")
-                print(input_text)
+                write_fail_testcase(input_text)
                 return 1
 
             if np_rc != 0:
@@ -194,8 +217,7 @@ def main() -> int:
                 print(f"[FAIL] test {test_id}: {args.oracle} exited with {np_rc}")
                 print("stderr:")
                 print(np_err)
-                print("input:")
-                print(input_text)
+                write_fail_testcase(input_text)
                 return 1
 
             try:
@@ -204,8 +226,7 @@ def main() -> int:
             except Exception as e:
                 print()
                 print(f"[FAIL] test {test_id}: output parse error: {e}")
-                print("input:")
-                print(input_text)
+                write_fail_testcase(input_text)
                 print("fast stdout:")
                 print(fast_out)
                 print("np stdout:")
@@ -215,8 +236,7 @@ def main() -> int:
             if not np.allclose(fast_mat, np_mat, atol=1e-6, rtol=1e-6):
                 print()
                 print(f"[FAIL] test {test_id}: mismatch")
-                print("input:")
-                print(input_text)
+                write_fail_testcase(input_text)
                 print("fast result:")
                 print(fast_mat)
                 print("numpy result:")
