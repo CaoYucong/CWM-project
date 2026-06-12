@@ -1,23 +1,23 @@
-# Report of Assignment 6
+# **Report of Assignment 6**
 
-- Name: Yucong Cao
-- Github Repo Link: [CaoYucong/CWM-Project](https://github.com/CaoYucong/CWM-project)
+- **Name:** Yucong Cao
+- **GitHub Repository:** [CaoYucong/CWM-Project](https://github.com/CaoYucong/CWM-project)
 
-## Fuzz Test
+## **Fuzz Testing**
 
-### Target
+### **Target**
 
-The fuzz test is targeting at the `matmul_fast.py` from assignment 1. The porpuse of the test is to verify the correctness and to find any bugs and volnerailities that emerges during the test.
+The fuzz testing process targets `matmul_fast.py` developed in Assignment 1. The purpose of the test is to verify the correctness of the implementation and identify any bugs or vulnerabilities that may emerge under a wide range of input conditions.
 
-### Test Method
+### **Test Method**
 
-The correctness test is conducted by cross-checking another standard matrix multiplication script with numpy, by giving the same input to both the scripts, and compare whether their outputs are the same.
+Correctness testing is performed by cross-checking the output of `matmul_fast.py` against a reference implementation written using NumPy. The same input is provided to both programs, and their outputs are compared for consistency.
 
-The standatd input is in this form: `rowA colB` is given first, and the matrix `A` is input next, following is the same input for matrix `B`. For example:
+The standard input format is as follows: the dimensions of matrix **A** (`rows cols`) are given first, followed by the elements of matrix **A**. The dimensions and elements of matrix **B** are then provided in the same format.
 
-Example Input:
+#### **Example Input**
 
-```
+```text
 2 3
 1.5 2.0 1.9
 4.0 5.5 6.0
@@ -28,64 +28,78 @@ Example Input:
 11.0 12.0
 ```
 
-This means the input matrices are :
-
+This corresponds to the matrices
 $$
-A = 
-\begin{bmatrix}
-1.5 & 2.0 & 1.9 \\
-4.0 & 5.5 & 6.0
-\end{bmatrix}, 
-B = 
-\begin{bmatrix}
-7.0 & 8.0\\
-9.0 & 1.0\\
-11.0& 12.0
-\end{bmatrix}, 
+ A =
+ \begin{bmatrix}
+ 1.5 & 2.0 & 1.9 \\
+ 4.0 & 5.5 & 6.0
+ \end{bmatrix},
+ \quad
+ B =
+ \begin{bmatrix}
+ 7.0 & 8.0 \\
+ 9.0 & 1.0 \\
+ 11.0 & 12.0
+ \end{bmatrix}.
 $$
 
-Example Output:
+#### **Example Output**
 
-```
+```text
 49.4 36.8
 143.5 109.5
 ```
 
-which corresponds to the product of $A$ and $B$.
+which corresponds to the product of matrices $A$ and $B$.
 
-Data range: $rows, cols \leq 100$, $|{A_{ij}}| \leq 10$, $A_{ij} \in  ℤ$ unless stated otherwise.
+### **Input Range**
 
-Different kinds of invalid inputs are also tested to find any buds or vulnerabilities including :
- - `mismatch` test refers to the case when the dimension declared does not match with the actual matrix input, rejection (raising an error) is expected from the script.
- - `negative-dimension` test refers to the case when the leading dimension information are given negative, rejection (raising an error) is expected from the script.
+Unless otherwise stated:
 
-Different extreme inputs are also tested, including:
- - `float` test sets all the emelents in matrix a float number.
- - `large-number` test limits all the elements in matrix in the range of $10^7 ~ 10^9$.
- - `large-scale` tests large-scale matrices with values under 1e5 and work scaled 1000 by 1000
- - `large-number-and-scale` tests large-number-and-scale matrices with values from 1e7 to 1e9 and work scaled 1000 by 1000
+- $rows, cols \leq 100$
+- $|A_{ij}| \leq 10$
+- $A_{ij} \in \mathbb{Z}$
 
-### Result
+### **Invalid Input Tests**
 
-This is the test result.
-```
-ubuntu@ubuntu:~/CWM-project/assignment6$ python3 '/home/ubuntu/CWM-project/assignment6/fuzz_test.py'
+Several categories of invalid inputs are tested to identify bugs and robustness issues:
 
+- **Mismatch Test**: The declared dimensions do not match the actual matrix data provided. The program is expected to reject such input by raising an error.
+- **Negative-Dimension Test**: One or more matrix dimensions are negative. The program is expected to reject such input by raising an error.
+
+### **Extreme Input Tests**
+
+Several stress tests are also conducted:
+
+- **Float Test**: All matrix elements are randomly generated floating-point values.
+- **Large-Number Test**: Matrix elements are randomly generated in the range $10^7$ to $10^9$.
+- **Large-Scale Test**: Matrices of size $1000 \times 1000$ with element values below $10^5$.
+- **Large-Number-and-Scale Test**: Matrices of size $1000 \times 1000$ with element values between $10^7$ and $10^9$.
+
+------
+
+## **Results**
+
+The following output was produced by the fuzz testing framework:
+
+```bash
+caoyucong@Yucongs-MacBook-Pro assignment6 % python3 fuzz_test.py             
 Running simple tests: (count=20)
 Testing correct multiplication, dimension limited by max_dim.
 Simple [##############################] 20/20 passed
 
 Simple timing summary:
   fast   : 20 runs
-    mean   = 0.031106 s
-    median = 0.030808 s
-    min    = 0.030356 s
-    max    = 0.033202 s
+    mean   = 0.018481 s
+    median = 0.018272 s
+    min    = 0.017536 s
+    max    = 0.021252 s
   np     : 20 runs
-    mean   = 0.108059 s
-    median = 0.107698 s
-    min    = 0.104649 s
-    max    = 0.117116 s
+    mean   = 0.074316 s
+    median = 0.071841 s
+    min    = 0.066029 s
+    max    = 0.087309 s
 
 Running mismatch tests: (count=20)
 Testing dimension mismatch scenarios, should be rejected by both implementations.
@@ -93,15 +107,15 @@ Mismatch [##############################] 20/20 rejected
 
 Mismatch timing summary:
   fast   : 20 runs
-    mean   = 0.114654 s
-    median = 0.113533 s
-    min    = 0.112762 s
-    max    = 0.127931 s
+    mean   = 0.025569 s
+    median = 0.025262 s
+    min    = 0.024567 s
+    max    = 0.029252 s
   np     : 20 runs
-    mean   = 0.169088 s
-    median = 0.168505 s
-    min    = 0.167643 s
-    max    = 0.172433 s
+    mean   = 0.076097 s
+    median = 0.075945 s
+    min    = 0.057971 s
+    max    = 0.087341 s
 
 Running negative-dimension tests: (count=20)
 Testing negative dimension scenarios, should be rejected by both implementations.
@@ -109,15 +123,15 @@ Negative-dimension [##############################] 20/20 rejected
 
 Negative-dimension timing summary:
   fast   : 20 runs
-    mean   = 0.117723 s
-    median = 0.117018 s
-    min    = 0.111903 s
-    max    = 0.131128 s
+    mean   = 0.025099 s
+    median = 0.024986 s
+    min    = 0.024766 s
+    max    = 0.026854 s
   np     : 20 runs
-    mean   = 0.175980 s
-    median = 0.175632 s
-    min    = 0.167533 s
-    max    = 0.184200 s
+    mean   = 0.073557 s
+    median = 0.074159 s
+    min    = 0.057713 s
+    max    = 0.093924 s
 
 Running large-number tests: (count=20)
 Testing large-number values with dimensions limited to 10 and input values from 1e7 to 1e9.
@@ -125,15 +139,15 @@ Large-number [##############################] 20/20 passed
 
 Large-number timing summary:
   fast   : 20 runs
-    mean   = 0.033221 s
-    median = 0.031171 s
-    min    = 0.030230 s
-    max    = 0.072315 s
+    mean   = 0.018277 s
+    median = 0.018197 s
+    min    = 0.017469 s
+    max    = 0.018918 s
   np     : 20 runs
-    mean   = 0.108751 s
-    median = 0.108678 s
-    min    = 0.105807 s
-    max    = 0.114626 s
+    mean   = 0.078202 s
+    median = 0.077552 s
+    min    = 0.056670 s
+    max    = 0.097989 s
 
 Running float tests: (count=20)
 Testing float matrices with dimensions limited to 100 and values under 1e5.
@@ -141,15 +155,15 @@ Float [##############################] 20/20 passed
 
 Float timing summary:
   fast   : 20 runs
-    mean   = 0.031356 s
-    median = 0.031219 s
-    min    = 0.030550 s
-    max    = 0.033317 s
+    mean   = 0.017932 s
+    median = 0.017928 s
+    min    = 0.017408 s
+    max    = 0.018489 s
   np     : 20 runs
-    mean   = 0.108920 s
-    median = 0.108195 s
-    min    = 0.105229 s
-    max    = 0.118843 s
+    mean   = 0.081865 s
+    median = 0.080161 s
+    min    = 0.057851 s
+    max    = 0.098258 s
 
 Running large-scale tests: (count=1)
 Testing large-scale matrices with values under 1e5 and work scaled 1000 by 1000
@@ -157,15 +171,15 @@ Large-scale [##############################] 1/1 passed
 
 Large-scale timing summary:
   fast   : 1 runs
-    mean   = 51.400527 s
-    median = 51.400527 s
-    min    = 51.400527 s
-    max    = 51.400527 s
+    mean   = 29.256139 s
+    median = 29.256139 s
+    min    = 29.256139 s
+    max    = 29.256139 s
   np     : 1 runs
-    mean   = 2.264707 s
-    median = 2.264707 s
-    min    = 2.264707 s
-    max    = 2.264707 s
+    mean   = 1.328235 s
+    median = 1.328235 s
+    min    = 1.328235 s
+    max    = 1.328235 s
 
 Running large-number-and-scale tests: (count=1)
 Testing large-number-and-scale matrices with values from 1e7 to 1e9 and work scaled 1000 by 1000.
@@ -173,32 +187,50 @@ Large-number-scale [##############################] 1/1 passed
 
 Large-number-and-scale timing summary:
   fast   : 1 runs
-    mean   = 52.011891 s
-    median = 52.011891 s
-    min    = 52.011891 s
-    max    = 52.011891 s
+    mean   = 29.633075 s
+    median = 29.633075 s
+    min    = 29.633075 s
+    max    = 29.633075 s
   np     : 1 runs
-    mean   = 2.359002 s
-    median = 2.359002 s
-    min    = 2.359002 s
-    max    = 2.359002 s
+    mean   = 1.446898 s
+    median = 1.446898 s
+    min    = 1.446898 s
+    max    = 1.446898 s
 
 All fuzz cases passed.
 ```
 
-The following graph shows the execution time of different scripts (including `matmul_slow.py`) wrt. scale:
+All generated test cases passed successfully after bug fixes were applied.
 
- - At small scales ($n \times n$ matrix with $n \leq 200$), the `slow` and `fast` scripts has similar performance and are both faster than `np`
+### **Performance Comparison**
 
-![](time_scale_plot_small_scale.png)
+The following graphs show the execution time of different implementations (`matmul_slow.py`, `matmul_fast.py`, and NumPy) with respect to matrix size.
 
- - At large scales($n \times n$ matrix with $n \leq 1000$), `np` is significantly faster than the other ones, and `slow` is slower than `fast` one.
+#### **Small Scale Matrices ($n \times n$, $n \leq 200$)**
 
-![](time_scale_plot_large_scale.png)
+At smaller scales, `matmul_slow.py` and `matmul_fast.py` exhibit similar performance and are both faster than NumPy due to lower initialization overhead.
 
-The reason for numpy to run fast is that this is a deeply optimised lobrary that uses different methods to speed up the calculation.
+![time_scale_plot_small_scale](time_scale_plot_small_scale.png)
 
- - To verify that `np` also has approximately $O(n^3)$ time complexity, different tirals are applied.
+#### **Large Scale Matrices ($n \times n$, $n \leq 1000$)**
+
+At larger scales, NumPy significantly outperforms both custom implementations. The optimized C/Fortran backend used by NumPy provides substantial performance advantages.
+
+The slower execution time of the custom implementations is expected because NumPy relies on highly optimized low-level linear algebra libraries such as BLAS and LAPACK.
+
+![time_scale_plot_large_scale](time_scale_plot_large_scale.png)
+
+### **Time Complexity Analysis of NumPy**
+
+To verify that NumPy matrix multiplication still follows approximately $O(n^3)$ complexity, additional experiments were performed over increasingly large matrix sizes.
+
+Although the execution time appears relatively flat over some ranges, this is mainly due to highly optimized implementations and small constant factors. Complexity analysis shows that the asymptotic growth remains approximately cubic. In particular, the value of
+$$
+\frac{\log(\text{time})}{\log(n)}
+$$
+
+
+approaches 3 as the matrix size increases, indicating behavior close to $O(n^3)$.
 
 ![](time_scale_plot_small_scale_np.png)
 
@@ -206,11 +238,15 @@ The reason for numpy to run fast is that this is a deeply optimised lobrary that
 
 ![](time_scale_plot_very_large_scale_np.png)
 
-#### Bugs and volnerailities found
+------
 
- - Missing Negetive Error
+## **Bugs Found and Fixed**
 
- ```bash
+### **Missing Validation for Negative Dimensions**
+
+During fuzz testing, the following issue was discovered:
+
+```bash
 Running negative-dimension tests: (count=20)
 Testing negative dimension scenarios, should be rejected by both implementations.
 Negative-dimension [###---------------------------] 2/20 rejected
@@ -219,51 +255,49 @@ fast exit: 0
 oracle exit: 0
 ```
 
-Fixed by adding a condition at input:
+The program incorrectly accepted matrices with negative dimensions.
+
+The issue was fixed by adding validation immediately after reading the matrix dimensions:
 
 ```python
-    if rows < 0 or cols < 0:
-        raise ValueError("matrix dimensions must be non-negative")
+if rows < 0 or cols < 0:
+    raise ValueError("matrix dimensions must be non-negative")
 ```
 
- - Long Execution Time under large scale:
+After applying this fix, all negative-dimension test cases were correctly rejected.
 
-```
-Running large-scale tests: (count=1)
-Testing large-scale matrices with values under 1e5 and work scaled 1000 by 1000
-Large-scale [##############################] 1/1 passed
+### **Long Execution Time for Large Inputs**
 
-Large-scale timing summary:
-  fast   : 1 runs
-    mean   = 51.400527 s
-    median = 51.400527 s
-    min    = 51.400527 s
-    max    = 51.400527 s
-  np     : 1 runs
-    mean   = 2.264707 s
-    median = 2.264707 s
-    min    = 2.264707 s
-    max    = 2.264707 s
+Performance testing revealed that execution time becomes very large for matrices of size $1000 \times 1000$:
 
-Running large-number-and-scale tests: (count=1)
-Testing large-number-and-scale matrices with values from 1e7 to 1e9 and work scaled 1000 by 1000.
-Large-number-scale [##############################] 1/1 passed
+```text
+Large-scale:
+fast = 51.40 s
+numpy = 2.26 s
 
-Large-number-and-scale timing summary:
-  fast   : 1 runs
-    mean   = 52.011891 s
-    median = 52.011891 s
-    min    = 52.011891 s
-    max    = 52.011891 s
-  np     : 1 runs
-    mean   = 2.359002 s
-    median = 2.359002 s
-    min    = 2.359002 s
-    max    = 2.359002 s
+Large-number-and-scale:
+fast = 52.01 s
+numpy = 2.36 s
 ```
 
-For large scales inputs, the computation time is very long on `matmul_fast.py`, which will cauce problems if this script is implemented on a server with large scale inquries.
+Although the results remain correct, the execution time of `matmul_fast.py` is significantly longer than that of NumPy.
 
-## Declaration on AI usage
+This may become problematic if the implementation is deployed in environments where large matrix multiplication requests are common, such as server-side numerical computing applications.
 
-GPT 5.5 instant is used for fixing standard file input and output as I need help with the syntax.
+------
+
+## **Conclusion**
+
+The fuzz testing process successfully verified the correctness of `matmul_fast.py` across a wide variety of normal, invalid, and extreme inputs. One bug related to negative matrix dimensions was discovered and fixed. Performance testing also highlighted a significant scalability limitation compared with NumPy, particularly for large matrices.
+
+Overall, the implementation is functionally correct after the bug fix, although further optimization would be required for large-scale applications.
+
+------
+
+## **Declaration on AI Usage**
+
+GPT-5.5 Instant was used to assist with:
+
+- Debugging standard input/output handling.
+- Python syntax issues encountered during development.
+- Grammar check with this report.
