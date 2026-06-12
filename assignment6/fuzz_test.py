@@ -1,4 +1,51 @@
 #!/usr/bin/env python3
+"""
+Comprehensive Fuzz Testing Suite for Matrix Multiplication Implementations
+
+This script provides extensive testing for matrix multiplication implementations, comparing
+a fast custom implementation against a NumPy oracle implementation.
+
+USAGE:
+    python fuzz_test.py [OPTIONS]
+
+MODES:
+    simple                  - Test correct multiplication with random matrices (default 20 tests)
+    mismatch                - Test dimension mismatch scenarios (should be rejected, 20 tests)
+    negative-dimension      - Test negative dimension scenarios (should be rejected, 20 tests)
+    large-number            - Test with very large values (1e7-1e9, 20 tests)
+    large-scale             - Test 1000x1000 matrices with normal values (1 test)
+    large-number-and-scale  - Test 1000x1000 matrices with large values (1 test)
+    float                   - Test with floating-point values (20 tests)
+    time-scale-plot         - Performance benchmark: tests 10x10 to 1000x1000 and generates plot
+    all                     - Run all modes except time-scale-plot (default)
+
+EXAMPLES:
+    # Run all default tests (time-scale-plot mode is not included in "all" mode by default)
+    python fuzz_test.py
+
+    # Run only simple tests
+    python fuzz_test.py --mode simple
+
+    # Run time-scale-plot benchmark (generates time_scale_plot.png)
+    python fuzz_test.py --mode time-scale-plot
+
+    # Run with custom number of tests per mode
+    python fuzz_test.py --tests 50
+
+    # Run with specific implementations
+    python fuzz_test.py --fast my_matmul.py --oracle numpy_matmul.py --mode simple
+
+    # Set random seed for reproducible tests
+    python fuzz_test.py --seed 42
+
+OPTIONS:
+    --fast FILE             Path to fast implementation (default: matmul_fast.py)
+    --oracle FILE           Path to NumPy oracle implementation (default: matmul_np.py)
+    --mode MODE             Test mode to run (default: all)
+    --tests N               Override default test count for all modes
+    --max-dim N             Maximum matrix dimension for random tests (default: 20)
+    --seed N                Random seed for reproducibility
+"""
 
 import argparse
 import random
@@ -128,7 +175,7 @@ def main() -> int:
         random.seed(args.seed)
         np.random.seed(args.seed)
 
-    modes_to_run = ["simple", "mismatch", "negative-dimension", "large-number", "float", "time-scale-plot", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
+    modes_to_run = ["simple", "mismatch", "negative-dimension", "large-number", "float", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
 
     default_tests = {
         "simple": 20,
