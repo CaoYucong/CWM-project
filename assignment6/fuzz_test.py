@@ -18,6 +18,13 @@ def gen_matrix(rows: int, cols: int, low: float = -10.0, high: float = 10.0) -> 
     )
 
 
+def gen_int_matrix(rows: int, cols: int, low: int = 1, high: int = 100) -> np.ndarray:
+    return np.array(
+        [[random.randint(low, high) for _ in range(cols)] for _ in range(rows)],
+        dtype=np.float64,
+    )
+
+
 def build_input_text(a: np.ndarray, b: np.ndarray) -> str:
     lines = []
     lines.append(f"{a.shape[0]} {a.shape[1]}")
@@ -83,6 +90,8 @@ def print_progress(test_id: int, total: int, mode: str, status: str = "") -> Non
     bar = "#" * filled + "-" * (bar_width - filled)
     if mode == "mismatch":
         mode_label = "Mismatch"
+    elif mode == "negative-dimension":
+        mode_label = "Negative-dimension"
     elif mode == "large-number":
         mode_label = "Large-number"
     elif mode == "large-scale":
@@ -104,7 +113,7 @@ def main() -> int:
     parser.add_argument("--tests", "--cases", type=int, default=None, help="Number of tests per mode; uses mode-specific defaults when omitted")
     parser.add_argument(
         "--mode",
-        choices=["simple", "mismatch", "large-number", "large-scale", "large-number-and-scale", "float", "all"],
+        choices=["simple", "mismatch", "negative-dimension", "large-number", "large-scale", "large-number-and-scale", "float", "all"],
         default="all",
         help="Test mode",
     )
@@ -116,11 +125,12 @@ def main() -> int:
         random.seed(args.seed)
         np.random.seed(args.seed)
 
-    modes_to_run = ["simple", "mismatch", "large-number", "float", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
+    modes_to_run = ["simple", "mismatch", "negative-dimension", "large-number", "float", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
 
     default_tests = {
         "simple": 20,
         "mismatch": 20,
+        "negative-dimension": 20,
         "large-number": 20,
         "large-scale": 1,
         "large-number-and-scale": 1,
@@ -134,6 +144,8 @@ def main() -> int:
             print("Testing correct multiplication, dimension limited by max_dim.")
         if mode == "mismatch":
             print("Testing dimension mismatch scenarios, should be rejected by both implementations.")
+        if mode == "negative-dimension":
+            print("Testing negative dimension scenarios, should be rejected by both implementations.")
         if mode == "large-number":
             print("Testing large-number values with dimensions limited to 10 and input values from 1e7 to 1e9.")
         if mode == "large-scale":
@@ -147,10 +159,10 @@ def main() -> int:
         np_times: list[float] = []
         for test_id in range(1, tests + 1):
             max_dim = args.max_dim
-            if mode == "mismatch":
-                max_dim = min(max_dim, 10)
+            if mode == "mismatch" or mode == "negative-dimension":
+                max_dim = min(max_dim, 100)
             elif mode == "large-number":
-                max_dim = min(max_dim, 10)
+                max_dim = min(max_dim, 100)
             elif mode == "large-scale":
                 max_dim = min(max_dim, 1e4)
             elif mode == "large-number-and-scale":
@@ -168,8 +180,8 @@ def main() -> int:
                 p = random.randint(1, max_dim)
 
             if mode == "simple":
-                a = gen_matrix(m, n)
-                b = gen_matrix(n, p)
+                a = gen_int_matrix(m, n)
+                b = gen_int_matrix(n, p)
                 input_text = build_input_text(a, b)
                 expect_failure = False
             elif mode == "large-number":
@@ -193,14 +205,31 @@ def main() -> int:
                 input_text = build_input_text(a, b)
                 expect_failure = False
             elif mode == "mismatch":
-                a = gen_matrix(m, n)
-                b = gen_matrix(n, p)
+                a = gen_int_matrix(m, n)
+                b = gen_int_matrix(n, p)
                 declared_a = (m, n + random.randint(1, max_dim))
                 declared_b = (n, p + random.randint(1, max_dim))
                 input_text = build_mismatch_input_text(a, b, declared_a, declared_b)
                 expect_failure = True
+            elif mode == "negative-dimension":
+                a = gen_int_matrix(m, n)
+                b = gen_int_matrix(n, p)
+                # Randomly choose which dimension to make negative
+                declared_a = (m, n)
+                declared_b = (n, p)
+                choice = random.randint(0, 3)
+                if choice == 0:
+                    declared_a = (-m, n)
+                elif choice == 1:
+                    declared_a = (m, -n)
+                elif choice == 2:
+                    declared_b = (-n, p)
+                else:
+                    declared_b = (n, -p)
+                input_text = build_mismatch_input_text(a, b, declared_a, declared_b)
+                expect_failure = True
             
-            if mode == "mismatch":
+            if mode == "mismatch" or mode == "negative-dimension":
                 print_progress(test_id - 1, tests, mode, "rejected")
             else:
                 print_progress(test_id - 1, tests, mode, "passed")
@@ -219,7 +248,7 @@ def main() -> int:
                 write_fail_testcase(input_text)
                 return 1
             
-            if mode == "mismatch":
+            if mode == "mismatch" or mode == "negative-dimension":
                 print_progress(test_id, tests, mode, "rejected")
             else:
                 print_progress(test_id, tests, mode, "passed")
@@ -227,10 +256,10 @@ def main() -> int:
             fast_times.append(fast_duration)
             np_times.append(np_duration)
 
-            if mode == "mismatch":
+            if mode == "mismatch" or mode == "negative-dimension":
                 if fast_rc == 0 or np_rc == 0:
                     print()
-                    print(f"[FAIL] test {test_id}: expected mismatch failure")
+                    print(f"[FAIL] test {test_id}: expected {mode} failure")
                     print("fast exit:", fast_rc)
                     print("oracle exit:", np_rc)
                     write_fail_testcase(input_text)

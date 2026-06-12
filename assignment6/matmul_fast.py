@@ -113,6 +113,10 @@ def read_matrix(tokens: list[str], position: int) -> tuple[Matrix, int]:
 
     rows = int(tokens[position])
     cols = int(tokens[position + 1])
+    
+    if rows < 0 or cols < 0:
+        raise ValueError("matrix dimensions must be non-negative")
+    
     position += 2
 
     matrix: Matrix = []

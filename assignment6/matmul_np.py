@@ -15,6 +15,9 @@ def read_matrix():
     cols = int(tokens[idx])
     idx += 1
 
+    if rows < 0 or cols < 0:
+        raise ValueError("matrix dimensions must be non-negative")
+
     data = []
     for _ in range(rows):
         row = [float(tokens[idx + j]) for j in range(cols)]
