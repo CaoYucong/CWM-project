@@ -242,3 +242,7 @@ Large-number-and-scale timing summary:
 ```
 
 For large scales inputs, the computation time is very long on `matmul_fast.py`, which will cauce problems if this script is implemented on a server with large scale inquries.
+
+## Declaration on AI usage
+
+GPT 5.5 instant is used for fixing standard file input and output as I need help with the syntax.
