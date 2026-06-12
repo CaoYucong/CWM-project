@@ -67,6 +67,7 @@ Different extreme inputs are also tested, including:
 
 ### Result
 
+This is the test result.
 ```
 ubuntu@ubuntu:~/CWM-project/assignment6$ python3 '/home/ubuntu/CWM-project/assignment6/fuzz_test.py'
 
@@ -184,6 +185,26 @@ Large-number-and-scale timing summary:
 
 All fuzz cases passed.
 ```
+
+The following graph shows the execution time of different scripts (including `matmul_slow.py`) wrt. scale:
+
+ - At small scales ($n \times n$ matrix with $n \leq 200$), the `slow` and `fast` scripts has similar performance and are both faster than `np`
+
+![](time_scale_plot_small_scale.png)
+
+ - At large scales($n \times n$ matrix with $n \leq 1000$), `np` is significantly faster than the other ones, and `slow` is slower than `fast` one.
+
+![](time_scale_plot_large_scale.png)
+
+The reason for numpy to run fast is that this is a deeply optimised lobrary that uses different methods to speed up the calculation.
+
+ - To verify that `np` also has approximately $O(n^3)$ time complexity, different tirals are applied.
+
+![](time_scale_plot_small_scale_np.png)
+
+![](time_scale_plot_large_scale_np.png)
+
+![](time_scale_plot_very_large_scale_np.png)
 
 #### Bugs and volnerailities found
 
