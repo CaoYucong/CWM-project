@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def gen_matrix(rows: int, cols: int, low: float = -10.0, high: float = 10.0) -> np.ndarray:
@@ -100,6 +101,8 @@ def print_progress(test_id: int, total: int, mode: str, status: str = "") -> Non
         mode_label = "Large-number-scale"
     elif mode == "float":
         mode_label = "Float"
+    elif mode == "time-scale-plot":
+        mode_label = "Time-scale-plot"
     else:
         mode_label = "Simple"
     status_text = f" {status}" if status else ""
@@ -113,7 +116,7 @@ def main() -> int:
     parser.add_argument("--tests", "--cases", type=int, default=None, help="Number of tests per mode; uses mode-specific defaults when omitted")
     parser.add_argument(
         "--mode",
-        choices=["simple", "mismatch", "negative-dimension", "large-number", "large-scale", "large-number-and-scale", "float", "all"],
+        choices=["simple", "mismatch", "negative-dimension", "large-number", "large-scale", "large-number-and-scale", "float", "time-scale-plot", "all"],
         default="all",
         help="Test mode",
     )
@@ -125,7 +128,7 @@ def main() -> int:
         random.seed(args.seed)
         np.random.seed(args.seed)
 
-    modes_to_run = ["simple", "mismatch", "negative-dimension", "large-number", "float", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
+    modes_to_run = ["simple", "mismatch", "negative-dimension", "large-number", "float", "time-scale-plot", "large-scale", "large-number-and-scale"] if args.mode == "all" else [args.mode]
 
     default_tests = {
         "simple": 20,
@@ -135,6 +138,7 @@ def main() -> int:
         "large-scale": 1,
         "large-number-and-scale": 1,
         "float": 20,
+        "time-scale-plot": 1,
     }
 
     for mode in modes_to_run:
@@ -154,6 +158,93 @@ def main() -> int:
             print("Testing large-number-and-scale matrices with values from 1e7 to 1e9 and work scaled 1000 by 1000.")
         if mode == "float":
             print("Testing float matrices with dimensions limited to 100 and values under 1e5.")
+        if mode == "time-scale-plot":
+            print("Testing different matrix scales from 10x10 to 500x500 (step 10) and 550x550 to 1000x1000 (step 50) and generating a time-scale plot.")
+            
+            scales = list(range(10, 501, 10)) + list(range(550, 1001, 50))  # 10-500 by 10, then 550-1000 by 50
+            scale_times_fast = []
+            scale_times_np = []
+            
+            for idx, scale in enumerate(scales):
+                print_progress(idx, len(scales), mode, f"testing {scale}x{scale}")
+                
+                m = scale
+                n = scale
+                p = scale
+                
+                a = gen_matrix(m, n, low=0.0, high=1e5)
+                b = gen_matrix(n, p, low=0.0, high=1e5)
+                input_text = build_input_text(a, b)
+                
+                try:
+                    start_time = time.perf_counter()
+                    fast_rc, fast_out, fast_err = run_script(args.fast, input_text)
+                    fast_duration = time.perf_counter() - start_time
+                    
+                    start_time = time.perf_counter()
+                    np_rc, np_out, np_err = run_script(args.oracle, input_text)
+                    np_duration = time.perf_counter() - start_time
+                except subprocess.TimeoutExpired:
+                    print()
+                    print(f"[FAIL] scale {scale}: timeout")
+                    write_fail_testcase(input_text)
+                    return 1
+                
+                if fast_rc != 0:
+                    print()
+                    print(f"[FAIL] scale {scale}: {args.fast} exited with {fast_rc}")
+                    print("stderr:")
+                    print(fast_err)
+                    write_fail_testcase(input_text)
+                    return 1
+                
+                if np_rc != 0:
+                    print()
+                    print(f"[FAIL] scale {scale}: {args.oracle} exited with {np_rc}")
+                    print("stderr:")
+                    print(np_err)
+                    write_fail_testcase(input_text)
+                    return 1
+                
+                try:
+                    fast_mat = parse_matrix_output(fast_out, m, p)
+                    np_mat = parse_matrix_output(np_out, m, p)
+                except Exception as e:
+                    print()
+                    print(f"[FAIL] scale {scale}: output parse error: {e}")
+                    write_fail_testcase(input_text)
+                    return 1
+                
+                if not np.allclose(fast_mat, np_mat, atol=1e-6, rtol=1e-6):
+                    print()
+                    print(f"[FAIL] scale {scale}: mismatch")
+                    write_fail_testcase(input_text)
+                    return 1
+                
+                scale_times_fast.append(fast_duration)
+                scale_times_np.append(np_duration)
+                print_progress(idx + 1, len(scales), mode, f"tested {scale}x{scale}")
+            
+            print()
+            print("\nGenerating time-scale plot...")
+            
+            plt.figure(figsize=(12, 7))
+            plt.plot(scales, scale_times_fast, 'b-o', label=f'{Path(args.fast).stem}', linewidth=2, markersize=4)
+            plt.plot(scales, scale_times_np, 'r-s', label=f'{Path(args.oracle).stem}', linewidth=2, markersize=4)
+            plt.xlabel('Matrix Size (n for nxn matrix)', fontsize=12)
+            plt.ylabel('Execution Time (seconds)', fontsize=12)
+            plt.title('Execution Time vs Matrix Scale', fontsize=14, fontweight='bold')
+            plt.legend(fontsize=11)
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+            
+            plot_path = Path(__file__).resolve().parent / "time_scale_plot.png"
+            plt.savefig(plot_path, dpi=150)
+            print(f"Plot saved to: {plot_path}")
+            plt.close()
+            
+            print("\nTime-scale-plot mode completed successfully.")
+            continue
 
         fast_times: list[float] = []
         np_times: list[float] = []
