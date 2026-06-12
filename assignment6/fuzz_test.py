@@ -41,6 +41,7 @@ EXAMPLES:
 OPTIONS:
     --fast FILE             Path to fast implementation (default: matmul_fast.py)
     --oracle FILE           Path to NumPy oracle implementation (default: matmul_np.py)
+    --slow FILE             Path to slow reference implementation (default: matmul_slow.py)
     --mode MODE             Test mode to run (default: all)
     --tests N               Override default test count for all modes
     --max-dim N             Maximum matrix dimension for random tests (default: 20)
@@ -160,6 +161,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fast", default="matmul_fast.py", help="Fast implementation")
     parser.add_argument("--oracle", default="matmul_np.py", help="NumPy implementation")
+    parser.add_argument("--slow", default="matmul_slow.py", help="Slow reference implementation")
     parser.add_argument("--tests", "--cases", type=int, default=None, help="Number of tests per mode; uses mode-specific defaults when omitted")
     parser.add_argument(
         "--mode",
@@ -209,8 +211,10 @@ def main() -> int:
             print("Testing different matrix scales from 10x10 to 500x500 (step 10) and 550x550 to 1000x1000 (step 50) and generating a time-scale plot.")
             
             scales = list(range(10, 501, 10)) + list(range(550, 1001, 50))  # 10-500 by 10, then 550-1000 by 50
+            # scales = list(range(10, 201, 5))
             scale_times_fast = []
             scale_times_np = []
+            scale_times_slow = []
             
             for idx, scale in enumerate(scales):
                 print_progress(idx, len(scales), mode, f"testing {scale}x{scale}")
@@ -231,6 +235,10 @@ def main() -> int:
                     start_time = time.perf_counter()
                     np_rc, np_out, np_err = run_script(args.oracle, input_text)
                     np_duration = time.perf_counter() - start_time
+                    
+                    start_time = time.perf_counter()
+                    slow_rc, slow_out, slow_err = run_script(args.slow, input_text)
+                    slow_duration = time.perf_counter() - start_time
                 except subprocess.TimeoutExpired:
                     print()
                     print(f"[FAIL] scale {scale}: timeout")
@@ -253,9 +261,18 @@ def main() -> int:
                     write_fail_testcase(input_text)
                     return 1
                 
+                if slow_rc != 0:
+                    print()
+                    print(f"[FAIL] scale {scale}: {args.slow} exited with {slow_rc}")
+                    print("stderr:")
+                    print(slow_err)
+                    write_fail_testcase(input_text)
+                    return 1
+                
                 try:
                     fast_mat = parse_matrix_output(fast_out, m, p)
                     np_mat = parse_matrix_output(np_out, m, p)
+                    slow_mat = parse_matrix_output(slow_out, m, p)
                 except Exception as e:
                     print()
                     print(f"[FAIL] scale {scale}: output parse error: {e}")
@@ -268,8 +285,15 @@ def main() -> int:
                     write_fail_testcase(input_text)
                     return 1
                 
+                if not np.allclose(fast_mat, slow_mat, atol=1e-6, rtol=1e-6):
+                    print()
+                    print(f"[FAIL] scale {scale}: mismatch with slow")
+                    write_fail_testcase(input_text)
+                    return 1
+                
                 scale_times_fast.append(fast_duration)
                 scale_times_np.append(np_duration)
+                scale_times_slow.append(slow_duration)
                 print_progress(idx + 1, len(scales), mode, f"tested {scale}x{scale}")
             
             print()
@@ -278,6 +302,7 @@ def main() -> int:
             plt.figure(figsize=(12, 7))
             plt.plot(scales, scale_times_fast, 'b-o', label=f'{Path(args.fast).stem}', linewidth=2, markersize=4)
             plt.plot(scales, scale_times_np, 'r-s', label=f'{Path(args.oracle).stem}', linewidth=2, markersize=4)
+            plt.plot(scales, scale_times_slow, 'g-^', label=f'{Path(args.slow).stem}', linewidth=2, markersize=4)
             plt.xlabel('Matrix Size (n for nxn matrix)', fontsize=12)
             plt.ylabel('Execution Time (seconds)', fontsize=12)
             plt.title('Execution Time vs Matrix Scale', fontsize=14, fontweight='bold')
