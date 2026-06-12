@@ -266,6 +266,22 @@ if rows < 0 or cols < 0:
 
 After applying this fix, all negative-dimension test cases were correctly rejected.
 
+### **Out-of-index error for large scales**
+
+```
+Running large-scale tests: (count=1)
+Testing large-scale matrices with values under 1e5 and work scaled 1000 by 1000
+Large-scale [#-----------------------------] 1/1 passed
+[FAIL] test 1: matmul_fast.py exited with 1
+```
+
+By default, from assignment 1, whe matrix has size 128. But as the input scale is larger then 128*128 in large scale test, an out-of-index error is raised. To fix this, resize the matrix w.r.t the input rows and cols:
+
+```python
+    rows = int(tokens[position])
+    cols = int(tokens[position + 1])
+```
+
 ### **Long Execution Time for Large Inputs**
 
 Performance testing revealed that execution time becomes very large for matrices of size $1000 \times 1000$:
